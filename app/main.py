@@ -39,6 +39,7 @@ from app.cache import (
 )
 from app.cleaning import clean_csv, CleanedReview
 from app.config import settings
+from app.insights import get_job_insights
 from app.llm_client import LLMClient
 
 logger = logging.getLogger("reviewlens.api")
@@ -334,6 +335,16 @@ async def get_job_results(job_id: str) -> dict[str, Any]:
         "status": job["status"],
         "reviews": reviews,
     }
+
+
+@app.get("/api/jobs/{job_id}/insights")
+async def get_job_insights_endpoint(job_id: str) -> dict[str, Any]:
+    """Compile aggregated store statistics, per-product splits, and top complaints/praises."""
+    job = get_job(job_id, db_path=settings.DB_PATH)
+    if not job:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found.")
+
+    return await get_job_insights(job_id, db_path=settings.DB_PATH, client=llm_client)
 
 
 @app.post("/api/reply/{job_id}/{review_id}")
