@@ -24,3 +24,5 @@ env/
 Thumbs.db
 .vscode/
 .idea/
+
+*.zip
