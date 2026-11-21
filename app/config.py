@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-@dataclass(frozen=True)
+@dataclass
 class Settings:
     """Centralized configuration for ReviewLens."""
 
