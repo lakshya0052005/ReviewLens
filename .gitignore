@@ -2,9 +2,14 @@
 .env
 .env.local
 
-# SQLite Databases
+# SQLite Databases & WAL files
 *.db
+*.db-shm
+*.db-wal
 *.sqlite3
+
+# Archives
+*.zip
 
 # Python bytecode and caches
 __pycache__/
@@ -24,5 +29,3 @@ env/
 Thumbs.db
 .vscode/
 .idea/
-
-*.zip
