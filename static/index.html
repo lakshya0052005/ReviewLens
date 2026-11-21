@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReviewLens – AI Review Insights</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <span class="brand-icon">🔍</span>
+        <div>
+          <h1>ReviewLens</h1>
+          <p class="subtitle">AI-Powered Store Review Intelligence</p>
+        </div>
+      </div>
+      <div class="header-meta">
+        <span class="badge badge-outline" id="modelBadge">Model: Gemini 1.5 Flash</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 1. Upload Section -->
+    <section class="card upload-card" id="uploadSection">
+      <h2>Upload Customer Reviews</h2>
+      <p class="section-desc">Upload your raw <code>reviews.csv</code> file. ReviewLens will parse multi-line texts, strip HTML, detect duplicates, and generate AI insights.</p>
+      
+      <form id="uploadForm" class="upload-form">
+        <div class="file-drop-area" id="dropArea">
+          <input type="file" id="fileInput" accept=".csv" class="file-input" required>
+          <div class="drop-message">
+            <span class="upload-icon">📁</span>
+            <p><strong>Click to choose a CSV file</strong> or drag & drop here</p>
+            <span class="file-selected-name" id="fileNameDisplay">No file selected</span>
+          </div>
+        </div>
+        <div class="upload-actions">
+          <button type="submit" id="uploadBtn" class="btn btn-primary" disabled>
+            Analyze Reviews
+          </button>
+        </div>
+      </form>
+
+      <!-- Progress Tracking Bar -->
+      <div id="progressContainer" class="progress-container hidden">
+        <div class="progress-header">
+          <span id="progressStatusText">Processing reviews with AI...</span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div id="progressBarFill" class="progress-bar-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-stats">
+          <span>Processed: <strong id="progressCounts">0 / 0</strong></span>
+          <span>LLM API Calls: <strong id="statCalls">0</strong></span>
+          <span>Cache Hits: <strong id="statHits">0</strong></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Dashboard Content (Revealed after analysis) -->
+    <div id="dashboardContent" class="dashboard-content hidden">
+
+      <!-- Performance & Cost Log Banner -->
+      <div class="metrics-banner">
+        <div class="metric-chip">⚡ <strong>Speed & Cost Log:</strong></div>
+        <div class="metric-chip">LLM Calls Made: <strong id="metricLlmCalls">0</strong></div>
+        <div class="metric-chip">Served from Cache: <strong id="metricCacheHits">0</strong></div>
+        <div class="metric-chip">Processing Time: <strong id="metricDuration">0s</strong></div>
+      </div>
+
+      <!-- High-level KPI Cards -->
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Total Reviews</span>
+          <div class="kpi-value" id="kpiTotalReviews">0</div>
+          <span class="kpi-sub" id="kpiAnalyzedSub">0 analyzed</span>
+        </div>
+        <div class="kpi-card positive">
+          <span class="kpi-label">Positive Sentiment</span>
+          <div class="kpi-value text-positive" id="kpiPositivePct">0%</div>
+          <span class="kpi-sub" id="kpiPositiveCount">0 reviews</span>
+        </div>
+        <div class="kpi-card neutral">
+          <span class="kpi-label">Neutral Sentiment</span>
+          <div class="kpi-value text-neutral" id="kpiNeutralPct">0%</div>
+          <span class="kpi-sub" id="kpiNeutralCount">0 reviews</span>
+        </div>
+        <div class="kpi-card negative">
+          <span class="kpi-label">Negative Sentiment</span>
+          <div class="kpi-value text-negative" id="kpiNegativePct">0%</div>
+          <span class="kpi-sub" id="kpiNegativeCount">0 reviews</span>
+        </div>
+        <div class="kpi-card action">
+          <span class="kpi-label">Needs Merchant Reply</span>
+          <div class="kpi-value text-accent" id="kpiNeedsReply">0</div>
+          <span class="kpi-sub">Pending issues</span>
+        </div>
+        <div class="kpi-card agreement">
+          <span class="kpi-label">Rating Agreement</span>
+          <div class="kpi-value" id="kpiRatingAgreement">100%</div>
+          <span class="kpi-sub" id="kpiMismatches">0 star mismatches</span>
+        </div>
+      </section>
+
+      <!-- Top 3 Praises vs Top 3 Complaints -->
+      <section class="insights-columns">
+        <div class="card praise-card">
+          <div class="card-header">
+            <h3>🌟 What Customers Love (Top Praises)</h3>
+          </div>
+          <ul id="topPraisesList" class="insight-list">
+            <li>Loading praises...</li>
+          </ul>
+        </div>
+        <div class="card complaint-card">
+          <div class="card-header">
+            <h3>⚠️ What Customers Complain About (Top Complaints)</h3>
+          </div>
+          <ul id="topComplaintsList" class="insight-list">
+            <li>Loading complaints...</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Per-Product Breakdown Table -->
+      <section class="card">
+        <div class="card-header">
+          <h3>📦 Per-Product Breakdown</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Total</th>
+                <th>Positive %</th>
+                <th>#1 Praise Topic</th>
+                <th>#1 Complaint Topic</th>
+                <th>Needs Reply</th>
+              </tr>
+            </thead>
+            <tbody id="productBreakdownBody">
+              <!-- Populated via app.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Review Exploration & Filterable Table -->
+      <section class="card">
+        <div class="card-header">
+          <h3>💬 Customer Reviews</h3>
+          <span class="row-count-badge" id="tableRowCount">Showing 0 reviews</span>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="filters-bar">
+          <div class="filter-group">
+            <label for="filterProduct">Product:</label>
+            <select id="filterProduct" class="select-control">
+              <option value="ALL">All Products</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filterSentiment">Sentiment:</label>
+            <select id="filterSentiment" class="select-control">
+              <option value="ALL">All Sentiments</option>
+              <option value="positive">Positive</option>
+              <option value="neutral">Neutral</option>
+              <option value="negative">Negative</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filterTopic">Topic:</label>
+            <select id="filterTopic" class="select-control">
+              <option value="ALL">All Topics</option>
+              <option value="quality">Quality</option>
+              <option value="delivery">Delivery</option>
+              <option value="price">Price</option>
+              <option value="packaging">Packaging</option>
+              <option value="support">Support</option>
+              <option value="size_fit">Size & Fit</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filterSpecial">Highlight:</label>
+            <select id="filterSpecial" class="select-control">
+              <option value="ALL">All Statuses</option>
+              <option value="needs_reply">Needs Reply</option>
+              <option value="mismatch">Rating Mismatch</option>
+              <option value="injection">Suspected Injection</option>
+              <option value="skipped">Skipped / Duplicates</option>
+            </select>
+          </div>
+          <button id="resetFiltersBtn" class="btn btn-secondary btn-sm">Reset Filters</button>
+        </div>
+
+        <!-- Reviews Table -->
+        <div class="table-responsive">
+          <table class="data-table reviews-table" id="reviewsTable">
+            <thead>
+              <tr>
+                <th style="width: 70px;">ID</th>
+                <th style="width: 170px;">Product</th>
+                <th style="width: 90px;">Rating</th>
+                <th style="width: 100px;">Sentiment</th>
+                <th style="width: 160px;">Topics</th>
+                <th>Summary & Customer Text</th>
+                <th style="width: 140px;">Status / Flags</th>
+                <th style="width: 130px;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="reviewsTableBody">
+              <!-- Populated via app.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <p>ReviewLens – Built for Associate Software Developer Assessment</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
